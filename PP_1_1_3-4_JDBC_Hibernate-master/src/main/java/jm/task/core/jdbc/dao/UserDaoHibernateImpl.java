@@ -7,6 +7,7 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 
+import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaQuery;
 import java.util.List;
 
@@ -79,20 +80,8 @@ public class UserDaoHibernateImpl implements UserDao {
     @Override
     public List<User> getAllUsers() {
         try (Session session = SESSION_FACTORY.openSession()) {
-            CriteriaQuery<User> criteriaQuery = session.getCriteriaBuilder().createQuery(User.class);
-            criteriaQuery.from(User.class);
-            transaction = session.beginTransaction();
-            List<User> userList = session.createQuery(criteriaQuery).getResultList();
-            try {
-                transaction.commit();
-                return userList;
-            } catch (HibernateException e) {
-                e.printStackTrace();
-                transaction.rollback();
-            } finally {
-                session.close();
-            }
-            return userList;
+            TypedQuery<User> typedQuery = session.createQuery("from User", User.class);
+            return typedQuery.getResultList();
         }
     }
 
@@ -100,7 +89,7 @@ public class UserDaoHibernateImpl implements UserDao {
     public void cleanUsersTable() {
         try (Session session = SESSION_FACTORY.openSession()) {
             transaction = session.beginTransaction();
-            session.createSQLQuery("TRUNCATE TABLE User").executeUpdate();
+            session.createQuery("DELETE User").executeUpdate();
             transaction.commit();
         } catch (Exception e) {
             if (transaction != null) {
